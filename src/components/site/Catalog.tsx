@@ -1,18 +1,59 @@
-import { useMemo, useState } from "react";
-import { FLOWERS, CATEGORIES, COLORS, OCCASIONS } from "@/lib/flowers";
+import { useMemo, useState, useEffect } from "react";
+import { COLORS, OCCASIONS, type Flower } from "@/lib/flowers";
 import { FlowerCard } from "./FlowerCard";
+import { productService } from "@/services/productService";
 
 export function Catalog() {
+  const [flowers, setFlowers] = useState<Flower[]>([]);
+  const [categories, setCategories] = useState<string[]>(["All"]);
+  const [loading, setLoading] = useState(true);
+
   const [q, setQ] = useState("");
-  const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("All");
-  const [color, setColor] = useState<(typeof COLORS)[number]>("All");
-  const [occ, setOcc] = useState<(typeof OCCASIONS)[number]>("All");
+  const [cat, setCat] = useState<string>("All");
+  const [color, setColor] = useState<string>("All");
+  const [occ, setOcc] = useState<string>("All");
   const [maxPrice, setMaxPrice] = useState(1500);
   const [onlyAvail, setOnlyAvail] = useState(true);
 
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [prodResult, catResult] = await Promise.all([
+          productService.getProducts({ limit: 100 }),
+          productService.getCategories()
+        ]);
+        
+        const loadedFlowers = (prodResult.data || []).map((p: any) => productService.toFlower(p));
+        setFlowers(loadedFlowers);
+        
+        const catNames = ["All", ...(catResult || []).map((c: any) => c.name)];
+        setCategories(catNames);
+      } catch (err) {
+        console.error("Failed to load catalog data:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+
+    const handleUpdate = () => {
+      loadData();
+    };
+
+    window.addEventListener("storage", handleUpdate);
+    window.addEventListener("pushpangan_products_updated", handleUpdate);
+    const interval = setInterval(loadData, 2000);
+
+    return () => {
+      window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("pushpangan_products_updated", handleUpdate);
+      clearInterval(interval);
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    return FLOWERS.filter((f) => {
+    return flowers.filter((f) => {
       if (term && !f.name.toLowerCase().includes(term)) return false;
       if (cat !== "All" && f.category !== cat) return false;
       if (color !== "All" && f.color !== color) return false;
@@ -21,7 +62,21 @@ export function Catalog() {
       if (onlyAvail && !f.available) return false;
       return true;
     });
-  }, [q, cat, color, occ, maxPrice, onlyAvail]);
+  }, [flowers, q, cat, color, occ, maxPrice, onlyAvail]);
+
+  if (loading) {
+    return (
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          <div key={n} className="animate-pulse rounded-3xl border border-border/60 bg-card p-4 space-y-4">
+            <div className="aspect-square w-full rounded-2xl bg-muted" />
+            <div className="h-4 w-2/3 bg-muted rounded" />
+            <div className="h-4 w-1/2 bg-muted rounded" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -36,9 +91,9 @@ export function Catalog() {
               className="mt-1 w-full rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary"
             />
           </label>
-          <Select label="Category" value={cat} onChange={(v) => setCat(v as typeof cat)} options={CATEGORIES} />
-          <Select label="Colour" value={color} onChange={(v) => setColor(v as typeof color)} options={COLORS} />
-          <Select label="Occasion" value={occ} onChange={(v) => setOcc(v as typeof occ)} options={OCCASIONS} />
+          <Select label="Category" value={cat} onChange={(v) => setCat(v)} options={categories} />
+          <Select label="Colour" value={color} onChange={(v) => setColor(v)} options={COLORS} />
+          <Select label="Occasion" value={occ} onChange={(v) => setOcc(v)} options={OCCASIONS} />
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
           <label className="block">
@@ -61,7 +116,7 @@ export function Catalog() {
       </div>
 
       <div className="mt-4 text-sm text-muted-foreground">
-        Showing <strong className="text-foreground">{filtered.length}</strong> of {FLOWERS.length} flowers
+        Showing <strong className="text-foreground">{filtered.length}</strong> of {flowers.length} flowers
       </div>
 
       {filtered.length === 0 ? (

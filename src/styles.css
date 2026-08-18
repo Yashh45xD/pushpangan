@@ -5,17 +5,13 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Pushpangan Official Color Palette:
+ * Deep Olive Green — #4F5535
+ * Golden Mustard — #B68F38
+ * Warm Cream — #E9E7DF
+ * Off White — #FFFFFF
+ * Soft Khaki — #9F905E
+ * Olive Gray — #666851
  */
 
 @theme inline {
@@ -46,98 +42,71 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-marigold: var(--marigold);
-  --color-marigold-foreground: var(--marigold-foreground);
-  --color-leaf: var(--leaf);
-  --color-cream: var(--cream);
+  
+  /* Exact Pushpangan Brand Colors */
+  --color-deep-olive: #4F5535;
+  --color-golden-mustard: #B68F38;
+  --color-warm-cream: #E9E7DF;
+  --color-off-white: #FFFFFF;
+  --color-soft-khaki: #9F905E;
+  --color-olive-gray: #666851;
+
+  --color-chart-1: #B68F38;
+  --color-chart-2: #4F5535;
+  --color-chart-3: #9F905E;
+  --color-chart-4: #666851;
+  --color-chart-5: #E9E7DF;
+
   --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
   --radius: 1rem;
-  /* Warm cream background */
-  --background: oklch(0.985 0.015 85);
-  --foreground: oklch(0.22 0.05 150);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.05 150);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.05 150);
-  /* Deep forest green as primary (#14371A-ish) */
-  --primary: oklch(0.32 0.08 150);
-  --primary-foreground: oklch(0.985 0.015 85);
-  --secondary: oklch(0.94 0.03 85);
-  --secondary-foreground: oklch(0.32 0.08 150);
-  --muted: oklch(0.95 0.02 90);
-  --muted-foreground: oklch(0.45 0.03 150);
-  --accent: oklch(0.72 0.17 55); /* marigold */
-  --accent-foreground: oklch(0.22 0.05 150);
+  /* Warm Cream background */
+  --background: #E9E7DF;
+  --foreground: #4F5535;
+  --card: #FFFFFF;
+  --card-foreground: #4F5535;
+  --popover: #FFFFFF;
+  --popover-foreground: #4F5535;
+  /* Deep Olive Green as primary */
+  --primary: #4F5535;
+  --primary-foreground: #E9E7DF;
+  --secondary: #E9E7DF;
+  --secondary-foreground: #4F5535;
+  --muted: #E9E7DF;
+  --muted-foreground: #666851;
+  /* Golden Mustard as accent */
+  --accent: #B68F38;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.9 0.02 90);
-  --input: oklch(0.9 0.02 90);
-  --ring: oklch(0.55 0.13 150);
-  --marigold: oklch(0.72 0.17 55);
-  --marigold-foreground: oklch(0.22 0.05 150);
-  --leaf: oklch(0.65 0.15 150);
-  --cream: oklch(0.985 0.015 85);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.015 85);
-  --sidebar-foreground: oklch(0.22 0.05 150);
-  --sidebar-primary: oklch(0.32 0.08 150);
-  --sidebar-primary-foreground: oklch(0.985 0.015 85);
-  --sidebar-accent: oklch(0.94 0.03 85);
-  --sidebar-accent-foreground: oklch(0.32 0.08 150);
-  --sidebar-border: oklch(0.9 0.02 90);
-  --sidebar-ring: oklch(0.55 0.13 150);
+  --destructive-foreground: #FFFFFF;
+  --border: #9F905E;
+  --input: #9F905E;
+  --ring: #4F5535;
 }
 
 .dark {
-  --background: oklch(0.18 0.03 150);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.23 0.04 150);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.23 0.04 150);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.72 0.17 55);
-  --primary-foreground: oklch(0.18 0.03 150);
-  --secondary: oklch(0.28 0.04 150);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.28 0.04 150);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.72 0.17 55);
-  --accent-foreground: oklch(0.984 0.003 247.858);
+  --background: #383d26;
+  --foreground: #E9E7DF;
+  --card: #4F5535;
+  --card-foreground: #E9E7DF;
+  --popover: #4F5535;
+  --popover-foreground: #E9E7DF;
+  --primary: #B68F38;
+  --primary-foreground: #383d26;
+  --secondary: #666851;
+  --secondary-foreground: #E9E7DF;
+  --muted: #666851;
+  --muted-foreground: #9F905E;
+  --accent: #B68F38;
+  --accent-foreground: #383d26;
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.55 0.13 150);
-  --marigold: oklch(0.72 0.17 55);
-  --marigold-foreground: oklch(0.18 0.03 150);
-  --leaf: oklch(0.65 0.15 150);
-  --cream: oklch(0.985 0.015 85);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --destructive-foreground: #FFFFFF;
+  --border: #666851;
+  --input: #666851;
+  --ring: #B68F38;
 }
 
 @layer base {
@@ -160,7 +129,7 @@
 
 @utility hero-gradient {
   background:
-    radial-gradient(ellipse at top right, color-mix(in oklab, var(--marigold) 40%, transparent), transparent 60%),
-    radial-gradient(ellipse at bottom left, color-mix(in oklab, var(--leaf) 35%, transparent), transparent 55%),
-    linear-gradient(180deg, var(--cream), color-mix(in oklab, var(--cream) 80%, var(--marigold) 10%));
+    radial-gradient(ellipse at top right, rgba(182, 143, 56, 0.3), transparent 60%),
+    radial-gradient(ellipse at bottom left, rgba(79, 85, 53, 0.2), transparent 55%),
+    linear-gradient(180deg, #E9E7DF, #f2efe4);
 }

@@ -1,10 +1,12 @@
 export const SITE = {
   brand: "Pushpangan",
   tagline: "Fresh Flowers, Delivered with Trust",
-  phone: "+91 98765 43210",
-  whatsappNumber: "919876543210", // digits only, no +
-  email: "hello@pushpangan.in",
-  address: "Wholesale Flower Market, Pune, Maharashtra, India",
+  phone: "+91 73043 30409",
+  whatsappNumber: "918369407007", // digits only, no +
+  email: "pushpangan001@gmail.com",
+  instagramHandle: "@push_pangan",
+  instagramUrl: "https://instagram.com/push_pangan",
+  address: "Wholesale Flower Market, Dadar, Maharashtra, India",
   hours: "Open daily · 5:00 AM – 9:00 PM",
   domain: "https://pushpangan.in",
 };

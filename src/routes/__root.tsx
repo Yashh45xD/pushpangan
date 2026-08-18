@@ -13,7 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
-import { SITE } from "@/lib/site";
+import { SITE, waLink } from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -119,18 +119,51 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { CartProvider } from "@/lib/CartContext";
+import { CartDrawer } from "@/components/site/CartDrawer";
+import { ToastProvider } from "@/hooks/useToast";
+import { useLocation } from "@tanstack/react-router";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const isAdminPath = location.pathname.startsWith("/admin");
+
+  if (isAdminPath) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <Footer />
-      </div>
+      <ToastProvider>
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <main className="flex-1">
+              <Outlet />
+            </main>
+            <Footer />
+            <CartDrawer />
+            <a
+              href={waLink("Hi Pushpangan! I would like to enquire about ordering flowers.")}
+              target="_blank"
+              rel="noreferrer"
+              className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-3 text-sm font-bold text-white shadow-2xl transition hover:scale-105 hover:bg-[#20ba5a] active:scale-95"
+              aria-label="Chat on WhatsApp"
+            >
+              <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.705 1.654zm6.097-4.281l.387.23c1.472.873 3.167 1.336 4.896 1.337 5.176 0 9.39-4.213 9.393-9.39.002-2.507-.972-4.864-2.746-6.639-1.774-1.775-4.132-2.75-6.643-2.75-5.178 0-9.39 4.213-9.392 9.39-.001 1.8.472 3.557 1.37 5.112l.252.435-1.084 3.96 4.058-1.003z"/>
+              </svg>
+              <span className="hidden sm:inline">WhatsApp Us</span>
+            </a>
+          </div>
+        </CartProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
+
