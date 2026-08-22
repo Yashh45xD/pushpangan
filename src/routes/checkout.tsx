@@ -73,7 +73,7 @@ function CheckoutPage() {
         user_id: buyerId,
         total_amount: totalPrice,
         discount_amount: discountAmount,
-        delivery_fee: deliveryCharge,
+        delivery_fee: 0,
         final_amount: grandTotal,
         shipping_address: `${form.name}, ${form.address}`,
         shipping_city: form.city,

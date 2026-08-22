@@ -25,6 +25,8 @@ export type CreateOrderInput = {
     unit_price: number;
     quantity: number;
     subtotal: number;
+    image?: string;
+    category?: string;
   }>;
 };
 
