@@ -121,15 +121,6 @@ export function Header() {
 
                   {/* Menu Links */}
                   <div className="py-2">
-                    {user?.email === "admin@pushpangan.com" && (
-                      <a
-                        href="/admin"
-                        style={{ backgroundColor: "#4F5535", color: "#FFFFFF" }}
-                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold hover:brightness-110 transition mx-2 my-1 rounded-xl shadow-sm"
-                      >
-                        👑 Admin Dashboard
-                      </a>
-                    )}
                     <a
                       href="/account"
                       style={{ color: "#4F5535" }}
@@ -138,18 +129,11 @@ export function Header() {
                       👤 My Account
                     </a>
                     <a
-                      href="/account"
+                      href="/orders"
                       style={{ color: "#4F5535" }}
                       className="flex items-center gap-2 px-4 py-2 text-xs font-semibold hover:bg-[#F5F3E9] transition"
                     >
                       📦 My Orders
-                    </a>
-                    <a
-                      href="/account"
-                      style={{ color: "#4F5535" }}
-                      className="flex items-center gap-2 px-4 py-2 text-xs font-semibold hover:bg-[#F5F3E9] transition"
-                    >
-                      ❤️ Wishlist
                     </a>
                     <a
                       href="/account"

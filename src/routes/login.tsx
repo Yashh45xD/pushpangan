@@ -135,29 +135,27 @@ function LoginPage() {
     try {
       const profile = await authService.signIn(loginEmail, loginPassword);
       // Save user session to localStorage
-      const userName = loginEmail.split("@")[0].replace(/[._-]/g, " ").split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-      const userSession = { name: userName, email: loginEmail, loggedIn: true };
+      const userSession = {
+        name: profile.full_name,
+        email: profile.email,
+        phone: profile.phone,
+        id: profile.id,
+        role: profile.role,
+        token: localStorage.getItem("pushpangan_token"),
+        loggedIn: true
+      };
       localStorage.setItem("siteUser", JSON.stringify(userSession));
       // Sync to admin users list (update last login or add new user)
-      syncLoginToAdminUsers(loginEmail, (profile as any)?.name || userName);
+      syncLoginToAdminUsers(profile.email, profile.full_name);
       // Merge guest cart with DB cart
-      await mergeGuestCart(profile?.id || loginEmail);
+      await mergeGuestCart(profile.id);
       setSuccessMsg("Logged in successfully! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
       }, 1000);
     } catch (err: any) {
-      // Demo mode fallback — log in with any credentials
-      const userName = loginEmail.split("@")[0].replace(/[._-]/g, " ").split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-      const userSession = { name: userName, email: loginEmail, loggedIn: true };
-      localStorage.setItem("siteUser", JSON.stringify(userSession));
-      // Sync to admin users list
-      syncLoginToAdminUsers(loginEmail, userName);
-      await mergeGuestCart(loginEmail).catch(() => {});
-      setSuccessMsg("Logged in successfully! Redirecting...");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
+      setErrorMsg(err.message || "Invalid email or password. Please try again.");
+      scrollToTop();
     } finally {
       setIsLoading(false);
     }
@@ -248,56 +246,58 @@ function LoginPage() {
     setIsLoading(true);
     try {
       await authService.signUp(regEmail, regPassword, regName, regPhone);
+
+      // Save newly registered user into pushpangan_admin_users for real-time admin view
+      try {
+        const userRole = regAccountType === "seller" ? "Seller" : "Customer";
+        const accountTypeLabel =
+          regAccountType === "wholesale"
+            ? "Wholesale Trader Account"
+            : regAccountType === "event"
+            ? "Event Decorator Account"
+            : regAccountType === "temple"
+            ? "Temple Trust Account"
+            : regAccountType === "seller"
+            ? "Seller Account"
+            : "Customer Account";
+
+        const newUserRecord = {
+          _id: "usr_" + Date.now(),
+          name: regName.trim(),
+          email: regEmail.trim(),
+          phone: regPhone.trim(),
+          role: userRole,
+          status: "Active",
+          joinedDate: new Date().toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" }),
+          accountId: (userRole === "Seller" ? "sel" : "usr") + Math.random().toString(36).substring(2, 8),
+          accountType: accountTypeLabel,
+          avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
+          totalOrders: 0,
+          totalSpent: 0,
+          lastLogin: "Just now",
+          addresses: [],
+          recentOrders: [],
+        };
+
+        const existingData = localStorage.getItem("pushpangan_admin_users");
+        const existingUsers = existingData ? JSON.parse(existingData) : [];
+        existingUsers.unshift(newUserRecord);
+        localStorage.setItem("pushpangan_admin_users", JSON.stringify(existingUsers));
+      } catch (e) {
+        console.warn("Failed to persist user to admin storage:", e);
+      }
+
+      setSuccessMsg("Account created successfully. Please sign in.");
+      setTimeout(() => {
+        switchMode("login");
+        setLoginEmail(regEmail);
+      }, 1500);
     } catch (err: any) {
-      // API call fallback
+      setErrorMsg(err.message || "Failed to create account. Please try again.");
+      scrollToTop();
+    } finally {
+      setIsLoading(false);
     }
-
-    // Save newly registered user into pushpangan_admin_users for real-time admin view
-    try {
-      const userRole = regAccountType === "seller" ? "Seller" : "Customer";
-      const accountTypeLabel =
-        regAccountType === "wholesale"
-          ? "Wholesale Trader Account"
-          : regAccountType === "event"
-          ? "Event Decorator Account"
-          : regAccountType === "temple"
-          ? "Temple Trust Account"
-          : regAccountType === "seller"
-          ? "Seller Account"
-          : "Customer Account";
-
-      const newUserRecord = {
-        _id: "usr_" + Date.now(),
-        name: regName.trim(),
-        email: regEmail.trim(),
-        phone: regPhone.trim(),
-        role: userRole,
-        status: "Active",
-        joinedDate: new Date().toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" }),
-        accountId: (userRole === "Seller" ? "sel" : "usr") + Math.random().toString(36).substring(2, 8),
-        accountType: accountTypeLabel,
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
-        totalOrders: 0,
-        totalSpent: 0,
-        lastLogin: "Just now",
-        addresses: [],
-        recentOrders: [],
-      };
-
-      const existingData = localStorage.getItem("pushpangan_admin_users");
-      const existingUsers = existingData ? JSON.parse(existingData) : [];
-      existingUsers.unshift(newUserRecord);
-      localStorage.setItem("pushpangan_admin_users", JSON.stringify(existingUsers));
-    } catch (e) {
-      console.warn("Failed to persist user to admin storage:", e);
-    }
-
-    setSuccessMsg("Account created! Please log in with your new credentials.");
-    setTimeout(() => {
-      switchMode("login");
-      setLoginEmail(regEmail);
-    }, 1500);
-    setIsLoading(false);
   };
 
   const handleOtpChange = (index: number, val: string) => {
@@ -500,39 +500,6 @@ function LoginPage() {
               >
                 {isLoading ? "Signing in…" : "Sign In"}
               </button>
-
-              {/* Admin Credentials Quick-Fill */}
-              <div className="mt-4 rounded-2xl border border-border/80 bg-muted/50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <span className="text-xs font-bold text-primary">Admin Panel Access</span>
-                </div>
-                <div className="space-y-1 mb-3">
-                  <div className="flex items-center gap-2 text-xs text-foreground/70">
-                    <span className="font-semibold text-foreground/90">Email:</span>
-                    <code className="rounded-md bg-background border border-border/60 px-2 py-0.5 text-[11px] font-mono select-all">admin@pushpangan.com</code>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-foreground/70">
-                    <span className="font-semibold text-foreground/90">Password:</span>
-                    <code className="rounded-md bg-background border border-border/60 px-2 py-0.5 text-[11px] font-mono select-all">admin123</code>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail("admin@pushpangan.com");
-                    setLoginPassword("admin123");
-                  }}
-                  className="w-full rounded-xl border border-accent/40 bg-accent/10 py-2 text-xs font-bold text-accent transition hover:bg-accent/20 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
-                >
-                  🔑 Auto-fill Admin Credentials
-                </button>
-                <p className="mt-2 text-center text-[10px] text-foreground/50">
-                  After login, go to <a href="/admin" className="underline text-primary font-semibold hover:text-accent">/admin</a> for the admin dashboard
-                </p>
-              </div>
             </form>
           )}
 

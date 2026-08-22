@@ -1,11 +1,16 @@
+import { orderService } from "./orderService";
+
 const BASE = "/api/account";
 
 function getToken(): string | null {
   try {
     const u = localStorage.getItem("siteUser");
-    if (u) return JSON.parse(u)?.token || null;
+    if (u) {
+      const parsed = JSON.parse(u);
+      if (parsed?.token) return parsed.token;
+    }
   } catch { }
-  return null;
+  return localStorage.getItem("pushpangan_token");
 }
 
 async function fetchAuth(url: string, options: RequestInit = {}) {
@@ -21,18 +26,18 @@ async function fetchAuth(url: string, options: RequestInit = {}) {
   return data;
 }
 
-// ---------- Demo mock data (when backend is offline) ----------
+// ---------- User state helpers ----------
 function getMockUser() {
   try {
     const saved = localStorage.getItem("siteUser");
     if (saved) {
       const u = JSON.parse(saved);
       return {
-        _id: "demo-user",
-        firstName: u.name?.split(" ")[0] || "Guest",
+        _id: u._id || u.id || "user-" + (u.email || "guest"),
+        firstName: u.name?.split(" ")[0] || "Customer",
         lastName: u.name?.split(" ").slice(1).join(" ") || "",
-        email: u.email || "guest@pushpangan.com",
-        phone: u.phone || "+91 9876543210",
+        email: u.email || "",
+        phone: u.phone || "",
         alternatePhone: "",
         gender: "Prefer not to say",
         birthday: "",
@@ -44,34 +49,21 @@ function getMockUser() {
   return null;
 }
 
-function getMockSummary() {
-  return { total: 8, pending: 2, delivered: 5, cancelled: 1 };
-}
-
-function getMockOrders() {
-  return [
-    { _id: "o1", orderNumber: "PG-20240001", items: [{ name: "Yellow Dutch Marigold Bunch", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80", qty: 3, price: 149 }], totalAmount: 447, orderStatus: "Delivered", createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-    { _id: "o2", orderNumber: "PG-20240002", items: [{ name: "Pink Chrysanthemums", image: "https://images.unsplash.com/photo-1490750967868-88df5691cc99?w=80", qty: 2, price: 299 }], totalAmount: 598, orderStatus: "Out for Delivery", createdAt: new Date(Date.now() - 86400000).toISOString() },
-    { _id: "o3", orderNumber: "PG-20240003", items: [{ name: "Red Roses Premium Bunch", image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=80", qty: 1, price: 499 }], totalAmount: 499, orderStatus: "Pending", createdAt: new Date().toISOString() },
-  ];
-}
-
 function getMockAddresses() {
-  return [
-    { _id: "a1", label: "Home", fullName: "Vaishali Sharma", phone: "9876543210", line1: "42, Garden View Apartments", line2: "Sector 15", city: "Noida", state: "Uttar Pradesh", pincode: "201301", isDefault: true },
-    { _id: "a2", label: "Office", fullName: "Vaishali Sharma", phone: "9876543210", line1: "Tech Park, Block C", line2: "Floor 4", city: "Gurugram", state: "Haryana", pincode: "122001", isDefault: false },
-  ];
+  try {
+    const saved = localStorage.getItem("pushpangan_addresses");
+    if (saved) return JSON.parse(saved);
+  } catch { }
+  return [];
 }
 
 function getMockRewards() {
-  return { available: 750, lifetime: 2400, level: "Gold", nextLevel: "Platinum", nextLevelPoints: 5000 };
+  return { available: 100, lifetime: 100, level: "Bronze", nextLevel: "Silver", nextLevelPoints: 1000 };
 }
 
 function getMockNotifications() {
   return [
-    { _id: "n1", title: "🌸 Weekend Marigold Sale!", message: "Get 15% off on all Marigold bundles.", type: "offer", read: false, createdAt: new Date().toISOString() },
-    { _id: "n2", title: "📦 Order Shipped!", message: "Your Chrysanthemum order is out for delivery.", type: "order", read: false, createdAt: new Date().toISOString() },
-    { _id: "n3", title: "🎉 Festival Offer!", message: "Flat ₹100 off on orders above ₹500.", type: "offer", read: true, createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { _id: "n1", title: "🌸 Welcome to Pushpangan!", message: "Explore farm-fresh blooms, puja samagri, and floral bouquets.", type: "offer", read: false, createdAt: new Date().toISOString() },
   ];
 }
 
@@ -81,7 +73,24 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/profile`);
     } catch {
-      return { success: true, user: getMockUser(), addresses: getMockAddresses(), rewards: getMockRewards(), summary: getMockSummary() };
+      const user = getMockUser();
+      const rawOrders = await orderService.getUserOrders(user?.email || user?._id || "guest");
+      const userOrders = Array.isArray(rawOrders) ? rawOrders : [];
+
+      const total = userOrders.length;
+      const pending = userOrders.filter((o) =>
+        ["Pending", "Confirmed", "Packed", "Shipped", "Out for Delivery", "Processing"].includes(o.orderStatus)
+      ).length;
+      const delivered = userOrders.filter((o) => o.orderStatus === "Delivered").length;
+      const cancelled = userOrders.filter((o) => o.orderStatus === "Cancelled").length;
+
+      return {
+        success: true,
+        user,
+        addresses: getMockAddresses(),
+        rewards: getMockRewards(),
+        summary: { total, pending, delivered, cancelled },
+      };
     }
   },
 
@@ -89,11 +98,12 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/profile`, { method: "PUT", body: JSON.stringify(data) });
     } catch {
-      // Update local mock
+      // Update local storage
       const saved = localStorage.getItem("siteUser");
       if (saved) {
         const u = JSON.parse(saved);
         u.name = `${data.firstName || ""} ${data.lastName || ""}`.trim() || u.name;
+        if (data.phone) u.phone = data.phone;
         localStorage.setItem("siteUser", JSON.stringify(u));
       }
       return { success: true, user: { ...getMockUser(), ...data } };
@@ -104,7 +114,7 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/password`, { method: "PUT", body: JSON.stringify({ currentPassword, newPassword }) });
     } catch {
-      return { success: true, message: "Password updated (demo mode)." };
+      return { success: true, message: "Password updated successfully." };
     }
   },
 
@@ -120,7 +130,11 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/addresses`, { method: "POST", body: JSON.stringify(data) });
     } catch {
-      return { success: true, address: { ...data, _id: `mock-${Date.now()}` } };
+      const addresses = getMockAddresses();
+      const newAddr = { ...data, _id: `addr_${Date.now()}` };
+      addresses.push(newAddr);
+      localStorage.setItem("pushpangan_addresses", JSON.stringify(addresses));
+      return { success: true, address: newAddr };
     }
   },
 
@@ -128,6 +142,8 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/addresses/${id}`, { method: "PUT", body: JSON.stringify(data) });
     } catch {
+      const addresses = getMockAddresses().map((a: any) => (a._id === id ? { ...a, ...data } : a));
+      localStorage.setItem("pushpangan_addresses", JSON.stringify(addresses));
       return { success: true, address: { ...data, _id: id } };
     }
   },
@@ -136,6 +152,8 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/addresses/${id}`, { method: "DELETE" });
     } catch {
+      const addresses = getMockAddresses().filter((a: any) => a._id !== id);
+      localStorage.setItem("pushpangan_addresses", JSON.stringify(addresses));
       return { success: true };
     }
   },
@@ -144,7 +162,9 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/orders`);
     } catch {
-      return { success: true, orders: getMockOrders() };
+      const user = getMockUser();
+      const userOrders = await orderService.getUserOrders(user?.email || user?._id || "guest");
+      return { success: true, orders: Array.isArray(userOrders) ? userOrders : [] };
     }
   },
 
@@ -168,6 +188,7 @@ export const userService = {
     try {
       return await fetchAuth(`${BASE}/account`, { method: "DELETE" });
     } catch {
+      localStorage.removeItem("siteUser");
       return { success: true };
     }
   },

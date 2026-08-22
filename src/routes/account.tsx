@@ -1,24 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { SITE } from "@/lib/site";
-import { Header } from "@/components/site/Header";
-import { Footer } from "@/components/site/Footer";
 import { AccountSidebar, type AccountSection } from "@/components/account/AccountSidebar";
 import { ProfileSection } from "@/components/account/sections/ProfileSection";
 import { ContactSection } from "@/components/account/sections/ContactSection";
 import { AddressSection } from "@/components/account/sections/AddressSection";
 import { SecuritySection } from "@/components/account/sections/SecuritySection";
-import { OrdersSummarySection } from "@/components/account/sections/OrdersSummarySection";
 import { RecentOrdersSection } from "@/components/account/sections/RecentOrdersSection";
-import { NotificationsSection } from "@/components/account/sections/NotificationsSection";
 import { RewardPointsSection } from "@/components/account/sections/RewardPointsSection";
-import { WishlistSection } from "@/components/account/sections/WishlistSection";
 import { CouponsSection } from "@/components/account/sections/CouponsSection";
-import { ReviewsSection } from "@/components/account/sections/ReviewsSection";
-import { SubscriptionsSection } from "@/components/account/sections/SubscriptionsSection";
 import { SupportSection } from "@/components/account/sections/SupportSection";
 import { SettingsSection } from "@/components/account/sections/SettingsSection";
-import { PaymentsSection } from "@/components/account/sections/PaymentsSection";
+
 import { userService } from "@/services/userService";
 import { Menu } from "lucide-react";
 
@@ -33,7 +26,7 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountPage() {
-  const [active, setActive] = useState<AccountSection>("dashboard");
+  const [active, setActive] = useState<AccountSection>("orders");
   const [user, setUser] = useState<Record<string, any> | null>(null);
   const [summary, setSummary] = useState({ total: 0, pending: 0, delivered: 0, cancelled: 0 });
   const [addresses, setAddresses] = useState<any[]>([]);
@@ -90,18 +83,12 @@ function AccountPage() {
   };
 
   const sectionTitles: Record<AccountSection, string> = {
-    dashboard: "Dashboard",
     orders: "My Orders",
-    wishlist: "My Wishlist",
     profile: "Personal Information",
     contact: "Contact Details",
     addresses: "Address Book",
     security: "Password & Security",
-    payments: "Payments",
-    subscriptions: "Flower Subscriptions",
     coupons: "Coupons & Offers",
-    reviews: "Reviews & Ratings",
-    notifications: "Notifications",
     rewards: "Reward Points",
     support: "Support Center",
     settings: "Settings",
@@ -126,22 +113,8 @@ function AccountPage() {
     }
 
     switch (active) {
-      case "dashboard":
-        return (
-          <div className="space-y-6">
-            <OrdersSummarySection
-              summary={summary}
-              wishlistCount={4}
-              rewards={rewards}
-              onNav={(s) => setActive(s as AccountSection)}
-            />
-            <RecentOrdersSection orders={orders} />
-          </div>
-        );
       case "orders":
         return <RecentOrdersSection orders={orders} />;
-      case "wishlist":
-        return <WishlistSection />;
       case "profile":
         return <ProfileSection user={user} onUpdate={handleUserUpdate} />;
       case "contact":
@@ -150,16 +123,9 @@ function AccountPage() {
         return <AddressSection addresses={addresses} onRefresh={refreshAddresses} />;
       case "security":
         return <SecuritySection onLogout={handleLogout} />;
-      case "payments":
-        return <PaymentsSection />;
-      case "subscriptions":
-        return <SubscriptionsSection />;
+
       case "coupons":
         return <CouponsSection />;
-      case "reviews":
-        return <ReviewsSection />;
-      case "notifications":
-        return <NotificationsSection notifications={notifications} />;
       case "rewards":
         return <RewardPointsSection rewards={rewards} />;
       case "support":
@@ -172,9 +138,7 @@ function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#F7F5EF" }}>
-      <Header />
-
+    <div className="flex flex-1 flex-col" style={{ backgroundColor: "#F7F5EF" }}>
       {/* Mobile Top Bar */}
       <div className="sticky top-16 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden" style={{ backgroundColor: "#FFFFFF", borderColor: "#E2DCBE" }}>
         <button
@@ -193,7 +157,7 @@ function AccountPage() {
       </div>
 
       {/* Main Layout */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 gap-6 px-4 py-6 md:px-8 md:py-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 px-4 py-6 md:px-8 md:py-8">
         {/* Sidebar */}
         <AccountSidebar
           active={active}
@@ -217,9 +181,7 @@ function AccountPage() {
 
           {renderContent()}
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

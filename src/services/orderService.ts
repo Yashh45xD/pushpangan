@@ -66,6 +66,8 @@ export const orderService = {
             name: i.product_name,
             quantity: i.quantity,
             price: i.unit_price,
+            image: i.image,
+            category: i.category,
           })),
           shippingAddress: {
             fullName: input.shipping_address.split(",")[0] || "Customer",
@@ -89,13 +91,17 @@ export const orderService = {
 
     if (!newOrder) {
       // Fallback: Local Storage Order Object
-      const orderNumber = `PKG-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const orderNumber = `PKG-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
       newOrder = {
         _id: `ord_${Date.now()}`,
         orderId: orderNumber,
         order_number: orderNumber,
+        orderNumber: orderNumber,
         userId: input.user_id || "guest",
+        customerName: input.shipping_address.split(",")[0] || "Customer",
+        customerPhone: input.shipping_phone,
         total_amount: input.total_amount,
+        totalAmount: input.final_amount,
         subtotal: input.total_amount,
         deliveryCharge: input.delivery_fee || 0,
         discount: input.discount_amount || 0,
@@ -112,20 +118,28 @@ export const orderService = {
         orderStatus: "Pending",
         paymentMethod: input.payment_method.toUpperCase(),
         paymentStatus: input.payment_method === "cod" ? "Pending" : "Paid",
-        estimatedDelivery: input.delivery_date || new Date().toISOString().split("T")[0],
+        estimatedDelivery: input.delivery_date || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         items: input.items.map((i) => ({
           productId: i.product_id,
           flowerName: i.product_name,
+          name: i.product_name,
           quantity: i.quantity,
+          qty: i.quantity,
           price: i.unit_price,
-          image: "https://images.unsplash.com/photo-1561181286-d3fee7d55364",
+          subtotal: i.subtotal,
+          image: i.image || "https://images.unsplash.com/photo-1561181286-d3fee7d55364",
+          category: i.category || "Fresh Flowers",
         })),
         createdAt: new Date().toISOString(),
       };
     }
 
     // 1. Save to Customer Orders List (pushpangan_orders_list)
-    const customerOrders = getStoredOrders();
+    const customerOrders = getStoredOrders().filter(
+      (o) => !["ord_1", "ord_2", "ord_3", "PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o._id) &&
+             !["PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o.orderId) &&
+             !["PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o.orderNumber)
+    );
     customerOrders.unshift(newOrder);
     saveOrders(customerOrders);
 
@@ -135,7 +149,7 @@ export const orderService = {
         _id: newOrder._id || newOrder.id,
         orderNumber: newOrder.orderId || newOrder.order_number || `ORD-${Date.now()}`,
         customerName: input.shipping_address.split(",")[0] || "Customer",
-        customerEmail: "customer@pushpangan.com",
+        customerEmail: input.user_id?.includes("@") ? input.user_id : "customer@pushpangan.com",
         customerPhone: input.shipping_phone,
         itemName: input.items?.[0]?.product_name || "Flower Arrangement",
         items: input.items.map((i) => ({
@@ -143,8 +157,9 @@ export const orderService = {
           price: i.unit_price,
           quantity: i.quantity,
           subtotal: i.subtotal,
+          image: i.image,
         })),
-        totalAmount: input.total_amount,
+        totalAmount: input.final_amount,
         finalAmount: input.final_amount,
         orderStatus: "Pending",
         paymentStatus: input.payment_method === "cod" ? "Pending" : "Paid",
@@ -173,21 +188,45 @@ export const orderService = {
     return newOrder;
   },
 
-  async getUserOrders(userId: string) {
+  async getUserOrders(userId?: string) {
     try {
       const response = await fetch(`${API_BASE}/orders/myorders`, {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
-      if (response.ok && data.success) {
+      if (response.ok && data.success && Array.isArray(data.data)) {
         return data.data;
       }
     } catch (err) {
       console.warn("Backend API getUserOrders failed, falling back to local storage:", err);
     }
 
-    const orders = getStoredOrders();
-    return orders;
+    const allOrders = getStoredOrders();
+    // Filter out dummy/admin demo mock orders
+    const cleanedOrders = allOrders.filter(
+      (o) => !["ord_1", "ord_2", "ord_3", "PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o._id) &&
+             !["PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o.orderId) &&
+             !["PUSH58924", "PUSH49301", "PUSH11930", "PG-20240001", "PG-20240002", "PG-20240003"].includes(o.orderNumber)
+    );
+    if (cleanedOrders.length !== allOrders.length) {
+      saveOrders(cleanedOrders);
+    }
+
+    if (!userId || userId === "guest" || userId === "all") {
+      return cleanedOrders;
+    }
+
+    // Filter strictly by the current buyer's ID/email/phone
+    const buyerOrders = cleanedOrders.filter((o) => {
+      if (o.userId === userId) return true;
+      if (o.userEmail && o.userEmail.toLowerCase() === userId.toLowerCase()) return true;
+      if (o.customerEmail && o.customerEmail.toLowerCase() === userId.toLowerCase()) return true;
+      if (o.customerPhone === userId || o.shippingAddress?.phone === userId) return true;
+      if (o.userId === "guest" || !o.userId) return true; // orders placed in this browser
+      return false;
+    });
+
+    return buyerOrders;
   },
 
   async getOrderById(id: string) {
@@ -228,6 +267,20 @@ export const orderService = {
       order.order_status = "Cancelled";
       saveOrders(orders);
     }
+
+    // Also update in admin orders if present
+    try {
+      const adminData = localStorage.getItem("pushpangan_admin_orders");
+      if (adminData) {
+        const adminOrders = JSON.parse(adminData);
+        const aOrder = adminOrders.find((o: any) => o._id === id || o.id === id || o.orderNumber === id);
+        if (aOrder) {
+          aOrder.orderStatus = "Cancelled";
+          localStorage.setItem("pushpangan_admin_orders", JSON.stringify(adminOrders));
+        }
+      }
+    } catch { }
+
     return order;
   },
 

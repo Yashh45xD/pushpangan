@@ -14,7 +14,7 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-type PaymentMethod = "cod" | "card";
+type PaymentMethod = "cod";
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -22,8 +22,6 @@ function CheckoutPage() {
     cart,
     totalPrice,
     discountAmount,
-    deliveryCharge,
-    gstAmount,
     grandTotal,
     clearCart,
   } = useCart();
@@ -62,7 +60,17 @@ function CheckoutPage() {
     if (!validate()) return;
     setIsSubmitting(true);
     try {
+      let buyerId = form.phone;
+      try {
+        const saved = localStorage.getItem("siteUser");
+        if (saved) {
+          const u = JSON.parse(saved);
+          buyerId = u.email || u._id || u.id || form.phone;
+        }
+      } catch { }
+
       const createdOrder = await orderService.createOrder({
+        user_id: buyerId,
         total_amount: totalPrice,
         discount_amount: discountAmount,
         delivery_fee: deliveryCharge,
@@ -79,6 +87,8 @@ function CheckoutPage() {
           unit_price: item.flower.price,
           quantity: item.quantity,
           subtotal: item.flower.price * item.quantity,
+          image: item.flower.image,
+          category: item.flower.category,
         })),
       });
 
@@ -123,10 +133,10 @@ function CheckoutPage() {
         </p>
         <div className="flex flex-wrap gap-4 justify-center">
           <Link
-            to="/"
-            className="rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-xl hover:brightness-110 transition"
+            to="/orders"
+            className="rounded-full bg-primary px-8 py-3.5 text-sm font-bold text-primary-foreground shadow-xl hover:brightness-110 transition flex items-center gap-2"
           >
-            Back to Home
+            📦 View My Orders
           </Link>
           <Link
             to="/shop"
@@ -234,11 +244,10 @@ function CheckoutPage() {
               <h2 className="font-display text-lg font-bold text-primary mb-5">
                 💳 Payment Method
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3">
                 {(
                   [
                     { id: "cod", label: "Cash on Delivery", icon: "💵" },
-                    { id: "card", label: "Credit / Debit Card", icon: "💳" },
                   ] as { id: PaymentMethod; label: string; icon: string }[]
                 ).map((pm) => (
                   <button
@@ -259,11 +268,6 @@ function CheckoutPage() {
               {payment === "cod" && (
                 <p className="mt-4 text-xs text-foreground/60 bg-muted rounded-xl px-4 py-2">
                   Pay cash to the delivery person. No extra charges.
-                </p>
-              )}
-              {payment === "card" && (
-                <p className="mt-4 text-xs text-foreground/60 bg-muted rounded-xl px-4 py-2">
-                  Online card payment will be collected via a secure payment link after order confirmation.
                 </p>
               )}
             </div>
@@ -303,12 +307,7 @@ function CheckoutPage() {
                 {discountAmount > 0 && (
                   <SummaryRow label="Discount" value={`− ${inr(discountAmount)}`} green />
                 )}
-                <SummaryRow
-                  label="Delivery"
-                  value={deliveryCharge === 0 ? "FREE" : inr(deliveryCharge)}
-                  green={deliveryCharge === 0}
-                />
-                <SummaryRow label="GST (5%)" value={inr(gstAmount)} />
+                <SummaryRow label="Delivery" value="FREE" green />
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">

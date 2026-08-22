@@ -30,8 +30,6 @@ function BasketPage() {
     totalPrice,
     discountAmount,
     setDiscountAmount,
-    deliveryCharge,
-    gstAmount,
     grandTotal,
   } = useCart();
 
@@ -269,17 +267,7 @@ function BasketPage() {
                 {discountAmount > 0 && (
                   <Row label="Discount" value={`− ${inr(discountAmount)}`} valueClass="text-green-600 font-bold" />
                 )}
-                <Row
-                  label="Delivery Charges"
-                  value={deliveryCharge === 0 ? "FREE 🎉" : inr(deliveryCharge)}
-                  valueClass={deliveryCharge === 0 ? "text-green-600 font-bold" : undefined}
-                />
-                {deliveryCharge > 0 && (
-                  <p className="text-[10px] text-foreground/50 -mt-1">
-                    Free delivery on orders above {inr(499)}
-                  </p>
-                )}
-                <Row label="GST (5%)" value={inr(gstAmount)} />
+                <Row label="Delivery" value="FREE" valueClass="text-green-600 font-bold" />
               </div>
 
               <div className="border-t border-border/60 pt-3 flex items-center justify-between">

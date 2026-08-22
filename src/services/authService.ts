@@ -65,61 +65,36 @@ export const authService = {
         throw new Error(data.message || "Registration failed.");
       }
 
+      const payload = data.data;
       const userProfile: UserProfile = {
-        id: data.user.id || data.user._id,
-        full_name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role,
+        id: payload.user.id || payload.user._id,
+        full_name: payload.user.name,
+        email: payload.user.email,
+        phone: payload.user.phone,
+        role: payload.user.role,
       };
 
-      if (data.token) {
-        localStorage.setItem("pushpangan_token", data.token);
+      if (payload.token) {
+        localStorage.setItem("pushpangan_token", payload.token);
       }
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(userProfile));
       return userProfile;
     } catch (err: any) {
-      console.warn("Backend API registration notice:", err.message);
-
-      // Fallback local storage registration
-      const users = getRegisteredUsers();
-      const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
-
-      if (existing) {
-        throw new Error("An account with this email address already exists.");
+      if (err.name === "TypeError" && err.message.includes("fetch")) {
+        throw new Error("Unable to connect to the server. Please make sure the backend is running.");
       }
-
-      const newUser: UserProfile & { password_hash: string } = {
-        id: `usr_${Date.now()}`,
-        full_name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
-        role: cleanEmail.includes("admin") ? "admin" : "customer",
-        password_hash: password_hash,
-      };
-
-      users.push(newUser);
-      saveRegisteredUsers(users);
-
-      const userProfile: UserProfile = {
-        id: newUser.id,
-        full_name: newUser.full_name,
-        email: newUser.email,
-        phone: newUser.phone,
-        role: newUser.role,
-      };
-
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(userProfile));
-      return userProfile;
+      throw err;
     }
   },
 
   // Sign In user with Express API + MongoDB database
   async signIn(email: string, password_hash: string) {
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = email.trim();
+    const isEmail = cleanEmail.includes("@");
+    const normalizedEmail = isEmail ? cleanEmail.toLowerCase() : cleanEmail;
 
-    if (!cleanEmail) {
-      throw new Error("Please enter your registered email address.");
+    if (!normalizedEmail) {
+      throw new Error("Please enter your registered email address or mobile number.");
     }
     if (!password_hash) {
       throw new Error("Please enter your password.");
@@ -130,7 +105,7 @@ export const authService = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: cleanEmail,
+          email: normalizedEmail,
           password: password_hash,
         }),
       });
@@ -140,44 +115,25 @@ export const authService = {
         throw new Error(data.message || "Invalid credentials.");
       }
 
+      const payload = data.data;
       const userProfile: UserProfile = {
-        id: data.user.id || data.user._id,
-        full_name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role,
+        id: payload.user.id || payload.user._id,
+        full_name: payload.user.name,
+        email: payload.user.email,
+        phone: payload.user.phone,
+        role: payload.user.role,
       };
 
-      if (data.token) {
-        localStorage.setItem("pushpangan_token", data.token);
+      if (payload.token) {
+        localStorage.setItem("pushpangan_token", payload.token);
       }
       localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(userProfile));
       return userProfile;
     } catch (err: any) {
-      console.warn("Backend API login notice:", err.message);
-
-      // Fallback local storage login
-      const users = getRegisteredUsers();
-      const user = users.find((u) => u.email.toLowerCase() === cleanEmail || u.phone === cleanEmail);
-
-      if (!user) {
-        throw new Error("No account found with this email or mobile number. Please sign up first.");
+      if (err.name === "TypeError" && err.message.includes("fetch")) {
+        throw new Error("Unable to connect to the server. Please make sure the backend is running.");
       }
-
-      if (user.password_hash !== password_hash) {
-        throw new Error("Incorrect password. Please double check and try again.");
-      }
-
-      const userProfile: UserProfile = {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      };
-
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(userProfile));
-      return userProfile;
+      throw err;
     }
   },
 

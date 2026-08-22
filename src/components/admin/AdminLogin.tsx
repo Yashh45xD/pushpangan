@@ -13,8 +13,8 @@ import { Lock, Mail, Eye, EyeOff, ShieldCheck, Flower2, KeyRound, AlertCircle, C
 
 export const AdminLogin: React.FC = () => {
   const { login } = useAdminAuth();
-  const [email, setEmail] = useState("admin@pushpangan.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,8 @@ export const AdminLogin: React.FC = () => {
     setEmail(roleEmail);
     setPassword(rolePass);
   };
+
+  const showDemoCredentials = import.meta.env.DEV;
 
   return (
     <div
@@ -202,10 +204,11 @@ export const AdminLogin: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Demo Credentials */}
+          {/* Quick Demo Credentials (development only) */}
+          {showDemoCredentials && (
           <div style={{ borderColor: "#E2DCBE" }} className="mt-8 pt-6 border-t">
             <p style={{ color: "#666851" }} className="text-xs font-bold mb-2.5 text-center">
-              Quick Demo Credentials (Click to autofill):
+              Dev demo credentials (click to autofill):
             </p>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -228,6 +231,7 @@ export const AdminLogin: React.FC = () => {
               </button>
             </div>
           </div>
+          )}
         </div>
       </div>
 

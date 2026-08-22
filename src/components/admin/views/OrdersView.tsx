@@ -217,9 +217,29 @@ export const OrdersView: React.FC = () => {
     } catch (e) {}
 
     const updated = orders.map((o) =>
-      o._id === orderId ? { ...o, orderStatus: newStatus } : o
+      (o._id === orderId || o.id === orderId || o.orderNumber === orderId) ? { ...o, orderStatus: newStatus } : o
     );
     saveToLocal(updated);
+
+    // Sync to customer orders list (pushpangan_orders_list)
+    try {
+      const custData = localStorage.getItem("pushpangan_orders_list");
+      if (custData) {
+        const custOrders = JSON.parse(custData);
+        const cUpdated = custOrders.map((o: any) =>
+          (o._id === orderId || o.id === orderId || o.orderId === orderId || o.order_number === orderId || o.orderNumber === orderId)
+            ? { ...o, orderStatus: newStatus }
+            : o
+        );
+        localStorage.setItem("pushpangan_orders_list", JSON.stringify(cUpdated));
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+        window.dispatchEvent(new Event("pushpangan_orders_updated"));
+      }
+    } catch (err) {
+      console.warn("Failed to sync status to customer orders:", err);
+    }
   };
 
   const handleDeleteOrder = (orderId: string) => {

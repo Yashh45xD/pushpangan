@@ -1,18 +1,12 @@
-import { User, Package, Heart, Settings, CreditCard, MapPin, Bell, Star, HelpCircle, LogOut, ChevronRight, Flower2, Tag, BarChart3, X } from "lucide-react";
+import { User, Package, Settings, MapPin, Bell, HelpCircle, LogOut, ChevronRight, Tag, X } from "lucide-react";
 
 export type AccountSection =
-  | "dashboard"
   | "orders"
-  | "wishlist"
   | "profile"
   | "contact"
   | "addresses"
   | "security"
-  | "payments"
-  | "subscriptions"
   | "coupons"
-  | "reviews"
-  | "notifications"
   | "rewards"
   | "support"
   | "settings";
@@ -28,11 +22,9 @@ interface SidebarProps {
 
 const navGroups = [
   {
-    label: "Overview",
+    label: "Orders & Activity",
     items: [
-      { id: "dashboard", icon: BarChart3, label: "Dashboard" },
       { id: "orders", icon: Package, label: "My Orders" },
-      { id: "wishlist", icon: Heart, label: "Wishlist" },
     ],
   },
   {
@@ -45,19 +37,10 @@ const navGroups = [
     ],
   },
   {
-    label: "Payments & Offers",
+    label: "Offers & Rewards",
     items: [
-      { id: "payments", icon: CreditCard, label: "Payments" },
       { id: "coupons", icon: Tag, label: "Coupons & Offers" },
-      { id: "rewards", icon: Star, label: "Reward Points" },
-    ],
-  },
-  {
-    label: "Activity",
-    items: [
-      { id: "subscriptions", icon: Flower2, label: "Flower Subscriptions" },
-      { id: "reviews", icon: Star, label: "Reviews & Ratings" },
-      { id: "notifications", icon: Bell, label: "Notifications" },
+      { id: "rewards", icon: Bell, label: "Reward Points" },
     ],
   },
   {

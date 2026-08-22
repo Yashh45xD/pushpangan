@@ -21,9 +21,6 @@ export type CartItem = {
   productId?: string;
 };
 
-const DELIVERY_FREE_THRESHOLD = 499;
-const DELIVERY_CHARGE = 49;
-const GST_RATE = 0.05; // 5 %
 
 type CartContextType = {
   cart: CartItem[];
@@ -196,17 +193,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     () => cart.reduce((s, i) => s + i.flower.price * i.quantity, 0),
     [cart]
   );
-  const deliveryCharge = useMemo(
-    () => (totalPrice >= DELIVERY_FREE_THRESHOLD || totalPrice === 0 ? 0 : DELIVERY_CHARGE),
-    [totalPrice]
-  );
-  const gstAmount = useMemo(
-    () => Math.round((totalPrice - discountAmount + deliveryCharge) * GST_RATE),
-    [totalPrice, discountAmount, deliveryCharge]
-  );
+  const deliveryCharge = 0;
+  const gstAmount = 0;
   const grandTotal = useMemo(
-    () => totalPrice - discountAmount + deliveryCharge + gstAmount,
-    [totalPrice, discountAmount, deliveryCharge, gstAmount]
+    () => totalPrice - discountAmount,
+    [totalPrice, discountAmount]
   );
 
   const openBasket = useCallback(() => setIsCartOpen(true), []);

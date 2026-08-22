@@ -1,21 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { adminService } from "../services/adminService";
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  permissions: string[];
-  avatar?: string;
-}
+import { clearAdminSession, getStoredAdminSession, type AdminUser } from "../lib/adminAuth";
 
 interface AdminAuthContextType {
   admin: AdminUser | null;
   token: string | null;
   loading: boolean;
   theme: "light" | "dark";
-  login: (credentials: any) => Promise<any>;
+  login: (credentials: { email?: string; password?: string; rememberMe?: boolean }) => Promise<any>;
   logout: () => Promise<void>;
   hasPermission: (permission: string) => boolean;
   hasRole: (allowedRoles: string[]) => boolean;
@@ -25,22 +17,8 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [admin, setAdmin] = useState<AdminUser | null>(() => {
-    if (typeof window === "undefined") return null;
-    const saved = localStorage.getItem("adminUser");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return null;
-  });
-
-  const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("adminToken");
-  });
-
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
@@ -54,31 +32,33 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem("adminToken");
-      if (storedToken) {
-        try {
-          const res = await adminService.getMe();
-          if (res.success && res.admin) {
-            setAdmin(res.admin);
-            localStorage.setItem("adminUser", JSON.stringify(res.admin));
-          }
-        } catch (err) {
-          console.warn("Auth initialization fallback");
+      try {
+        const res = await adminService.getMe();
+        if (res.success && res.admin) {
+          setAdmin(res.admin);
+          setToken(getStoredAdminSession()?.token ?? null);
+        } else {
+          setAdmin(null);
+          setToken(null);
+          clearAdminSession();
         }
+      } catch {
+        setAdmin(null);
+        setToken(null);
+        clearAdminSession();
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();
   }, []);
 
-  const login = async (credentials: any) => {
+  const login = async (credentials: { email?: string; password?: string; rememberMe?: boolean }) => {
     const res = await adminService.login(credentials);
     if (res.success && res.admin) {
       setAdmin(res.admin);
-      setToken(res.token || "admin_token_active");
-      localStorage.setItem("adminUser", JSON.stringify(res.admin));
-      if (res.token) localStorage.setItem("adminToken", res.token);
+      setToken(res.token || getStoredAdminSession()?.token || null);
     }
     return res;
   };
@@ -87,9 +67,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await adminService.logout();
     setAdmin(null);
     setToken(null);
-    localStorage.removeItem("adminUser");
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminRefreshToken");
   };
 
   const hasPermission = (permission: string): boolean => {

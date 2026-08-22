@@ -1,6 +1,14 @@
 // Pushpangan Admin API Service Layer
+import {
+  clearAdminSession,
+  createAdminSessionToken,
+  getStoredAdminSession,
+  isAdminRole,
+  persistAdminSession,
+  validateLocalAdminCredentials,
+} from "../lib/adminAuth";
 
-const API_BASE = "http://localhost:5000/api/admin";
+const API_BASE = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/admin`;
 
 const getHeaders = () => {
   const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;
@@ -12,7 +20,14 @@ const getHeaders = () => {
 
 export const adminService = {
   // Authentication
-  async login(credentials: any) {
+  async login(credentials: { email?: string; password?: string; rememberMe?: boolean }) {
+    const email = credentials.email?.trim() || "";
+    const password = credentials.password || "";
+
+    if (!email || !password) {
+      return { success: false, message: "Email and password are required." };
+    }
+
     try {
       const res = await fetch(`${API_BASE}/login`, {
         method: "POST",
@@ -20,45 +35,24 @@ export const adminService = {
         body: JSON.stringify(credentials),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
-      if (data.token) localStorage.setItem("adminToken", data.token);
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Login failed");
+      }
+      if (!data.admin || !isAdminRole(data.admin.role)) {
+        return { success: false, message: "This account is not authorized for admin access." };
+      }
+      if (data.token) persistAdminSession(data.admin, data.token);
       if (data.refreshToken) localStorage.setItem("adminRefreshToken", data.refreshToken);
       return data;
-    } catch (err: any) {
-      let name = "Pushpangan Admin";
-      let role = "super_admin";
-
-      if (credentials.email?.includes("manager")) {
-        name = "Store Manager";
-        role = "manager";
-      } else if (credentials.email?.includes("inventory")) {
-        name = "Inventory Manager";
-        role = "inventory_manager";
-      } else if (credentials.email) {
-        const rawName = credentials.email.split("@")[0].replace(/[._-]/g, " ");
-        name = rawName.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    } catch {
+      const admin = validateLocalAdminCredentials(email, password);
+      if (!admin) {
+        return { success: false, message: "Invalid admin credentials or unauthorized access." };
       }
 
-      const mockAdmin = {
-        id: "admin-" + Date.now(),
-        name: name,
-        email: credentials.email || "admin@pushpangan.com",
-        role: role,
-        permissions: [
-          "view_only",
-          "edit",
-          "delete",
-          "create",
-          "manage_orders",
-          "manage_products",
-          "manage_users",
-          "manage_settings",
-          "manage_admins",
-        ],
-      };
-      const mockToken = "admin_jwt_token_active";
-      localStorage.setItem("adminToken", mockToken);
-      return { success: true, token: mockToken, admin: mockAdmin };
+      const token = createAdminSessionToken(admin.id);
+      persistAdminSession(admin, token);
+      return { success: true, token, admin };
     }
   },
 
@@ -66,43 +60,25 @@ export const adminService = {
     try {
       await fetch(`${API_BASE}/logout`, { method: "POST", headers: getHeaders() });
     } catch (e) {}
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminRefreshToken");
-    localStorage.removeItem("adminUser");
+    clearAdminSession();
   },
 
   async getMe() {
     try {
       const res = await fetch(`${API_BASE}/me`, { headers: getHeaders() });
-      if (!res.ok) throw new Error();
-      return await res.json();
-    } catch (err) {
-      const saved = localStorage.getItem("adminUser");
-      if (saved) {
-        try {
-          return { success: true, admin: JSON.parse(saved) };
-        } catch (e) {}
+      if (!res.ok) throw new Error("Unauthorized");
+      const data = await res.json();
+      if (!data.success || !data.admin || !isAdminRole(data.admin.role)) {
+        throw new Error("Unauthorized");
       }
-      return {
-        success: true,
-        admin: {
-          id: "admin-super",
-          name: "Pushpangan Admin",
-          email: "admin@pushpangan.com",
-          role: "super_admin",
-          permissions: [
-            "view_only",
-            "edit",
-            "delete",
-            "create",
-            "manage_orders",
-            "manage_products",
-            "manage_users",
-            "manage_settings",
-            "manage_admins",
-          ],
-        },
-      };
+      return data;
+    } catch {
+      const session = getStoredAdminSession();
+      if (session) {
+        return { success: true, admin: session.admin };
+      }
+      clearAdminSession();
+      return { success: false, admin: null };
     }
   },
 

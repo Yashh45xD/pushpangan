@@ -39,119 +39,40 @@ export const Route = createFileRoute("/orders")({
 
 type TabType = "orders" | "buy_again" | "cancelled";
 
-const defaultDemoOrders = [
-  {
-    _id: "ord_1",
-    orderId: "PUSH58924",
-    order_number: "PUSH58924",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    paymentMethod: "Razorpay",
-    paymentStatus: "Paid",
-    orderStatus: "Confirmed",
-    subtotal: 750,
-    deliveryCharge: 0,
-    discount: 50,
-    coupon: "WELCOME50",
-    gst: 126,
-    grandTotal: 826,
-    estimatedDelivery: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    deliveryInstructions: "Leave near the flower pot outside the front door.",
-    shippingAddress: {
-      fullName: "Yash Varpe",
-      phone: "8369407007",
-      street: "Row House 4, Orchid Meadows, Baner",
-      city: "Pune",
-      state: "Maharashtra",
-      pincode: "411045",
-    },
-    items: [
-      {
-        productId: "fl_1",
-        flowerName: "🌹 Red Roses Bouquet",
-        category: "Bouquets",
-        quantity: 1,
-        price: 500,
-        image: "https://images.unsplash.com/photo-1561181286-d3fee7d55364",
-      },
-      {
-        productId: "fl_2",
-        flowerName: "🌼 Yellow Marigold (Genda)",
-        category: "Loose Flowers",
-        quantity: 2,
-        price: 125,
-        image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651",
-      }
-    ]
-  },
-  {
-    _id: "ord_2",
-    orderId: "PUSH49301",
-    order_number: "PUSH49301",
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
-    paymentMethod: "COD",
-    paymentStatus: "Paid",
-    orderStatus: "Delivered",
-    subtotal: 1200,
-    deliveryCharge: 0,
-    discount: 100,
-    coupon: "FESTIVE100",
-    gst: 198,
-    grandTotal: 1298,
-    estimatedDelivery: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
-    deliveryInstructions: "Call before reaching.",
-    shippingAddress: {
-      fullName: "Yash Varpe",
-      phone: "8369407007",
-      street: "Row House 4, Orchid Meadows, Baner",
-      city: "Pune",
-      state: "Maharashtra",
-      pincode: "411045",
-    },
-    items: [
-      {
-        productId: "fl_3",
-        flowerName: "🌸 Jasmine (Mogra) Garland",
-        category: "Garlands",
-        quantity: 3,
-        price: 400,
-        image: "https://images.unsplash.com/photo-1591886960571-74d43a9d4166",
-      }
-    ]
-  },
-  {
-    _id: "ord_3",
-    orderId: "PUSH11930",
-    order_number: "PUSH11930",
-    createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(), // 40 days ago
-    paymentMethod: "Stripe",
-    paymentStatus: "Refunded",
-    orderStatus: "Cancelled",
-    subtotal: 450,
-    deliveryCharge: 99,
-    discount: 0,
-    gst: 81,
-    grandTotal: 630,
-    estimatedDelivery: new Date(Date.now() - 39 * 24 * 60 * 60 * 1000).toISOString(),
-    shippingAddress: {
-      fullName: "Yash Varpe",
-      phone: "8369407007",
-      street: "Row House 4, Orchid Meadows, Baner",
-      city: "Pune",
-      state: "Maharashtra",
-      pincode: "411045",
-    },
-    items: [
-      {
-        productId: "fl_4",
-        flowerName: "🪷 Sacred Pink Lotus Bloom",
-        category: "Pooja Flowers",
-        quantity: 5,
-        price: 90,
-        image: "https://images.unsplash.com/photo-1502082553048-f009c37129b9",
-      }
-    ]
-  }
+// Maps flower keywords to curated Unsplash images
+const FLOWER_IMAGE_MAP: { keywords: string[]; image: string }[] = [
+  { keywords: ["rose", "roses"], image: "https://images.unsplash.com/photo-1490750967868-88df5691cc5b?w=200" },
+  { keywords: ["lotus"], image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200" },
+  { keywords: ["jasmine", "chameli"], image: "https://images.unsplash.com/photo-1591813890791-85a1db22b9e0?w=200" },
+  { keywords: ["marigold", "genda", "tagetes"], image: "https://images.unsplash.com/photo-1598512752271-33f913a5af13?w=200" },
+  { keywords: ["sunflower", "sun flower"], image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?w=200" },
+  { keywords: ["hibiscus", "gudhal"], image: "https://images.unsplash.com/photo-1596401057633-54a8b6957403?w=200" },
+  { keywords: ["tulip", "tulips"], image: "https://images.unsplash.com/photo-1582131503261-fca1d1c0589f?w=200" },
+  { keywords: ["lily", "lilies"], image: "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=200" },
+  { keywords: ["orchid", "orchids"], image: "https://images.unsplash.com/photo-1566897819059-e4d1cd76ac5c?w=200" },
+  { keywords: ["daisy", "daisies"], image: "https://images.unsplash.com/photo-1490750967868-88df5691cc5b?w=200" },
+  { keywords: ["lavender"], image: "https://images.unsplash.com/photo-1499578124509-1611b77778c8?w=200" },
+  { keywords: ["peony", "peonies"], image: "https://images.unsplash.com/photo-1534430480872-3498386e7856?w=200" },
+  { keywords: ["chrysanthemum", "mums"], image: "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=200" },
+  { keywords: ["carnation", "carnations"], image: "https://images.unsplash.com/photo-1515418841082-ff3f5492a00d?w=200" },
+  { keywords: ["gerbera", "daisy"], image: "https://images.unsplash.com/photo-1490750967868-88df5691cc5b?w=200" },
+  { keywords: ["bougainvillea"], image: "https://images.unsplash.com/photo-1599940778173-e276d4acb2bb?w=200" },
+  { keywords: ["dahlia", "dahlias"], image: "https://images.unsplash.com/photo-1524650166929-c8f4cfa64697?w=200" },
+  { keywords: ["aster", "asters"], image: "https://images.unsplash.com/photo-1490750967868-88df5691cc5b?w=200" },
 ];
+
+const FLOWER_FALLBACK = "https://images.unsplash.com/photo-1487530811015-780dddded18b?w=200";
+
+function getFlowerImageByName(name: string): string {
+  if (!name) return FLOWER_FALLBACK;
+  const lower = name.toLowerCase();
+  for (const entry of FLOWER_IMAGE_MAP) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) {
+      return entry.image;
+    }
+  }
+  return FLOWER_FALLBACK;
+}
 
 function OrdersPage() {
   const { toast } = useToast();
@@ -176,36 +97,36 @@ function OrdersPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
 
-  // Load orders on mount
-  useEffect(() => {
-    const fetchOrders = async () => {
-      setIsLoading(true);
-      try {
-        const userStr = localStorage.getItem("siteUser");
-        const user = userStr ? JSON.parse(userStr) : null;
-        let data = await orderService.getUserOrders(user?.email || "guest");
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const userStr = localStorage.getItem("siteUser");
+      const user = userStr ? JSON.parse(userStr) : null;
+      const data = await orderService.getUserOrders(user?.email || user?._id || "guest");
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load orders", err);
+      toast.error("Could not fetch order history.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        // Seed with demo data if empty
-        if (!data || data.length === 0) {
-          const stored = localStorage.getItem("pushpangan_orders_list");
-          if (!stored) {
-            localStorage.setItem("pushpangan_orders_list", JSON.stringify(defaultDemoOrders));
-            data = defaultDemoOrders;
-          } else {
-            data = JSON.parse(stored);
-          }
-        }
-        setOrders(data);
-      } catch (err) {
-        console.error("Failed to load orders", err);
-        toast.error("Could not fetch order history.");
-      } finally {
-        setIsLoading(false);
-      }
+  // Load orders on mount & listen for updates
+  useEffect(() => {
+    fetchOrders();
+
+    const handleUpdate = () => {
+      fetchOrders();
     };
 
-    fetchOrders();
-  }, [toast]);
+    window.addEventListener("storage", handleUpdate);
+    window.addEventListener("pushpangan_orders_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("pushpangan_orders_updated", handleUpdate);
+    };
+  }, []);
 
   // Tab Filtering (Orders, Buy Again, Cancelled)
   const tabFilteredOrders = useMemo(() => {
@@ -382,10 +303,10 @@ function OrdersPage() {
 
   // Helpers
   const getStatusColor = (status: string) => {
-    const s = status.toLowerCase();
+    const s = (status || "").toLowerCase();
     if (s === "pending") return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300";
     if (s === "confirmed") return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300";
-    if (s === "packed" || s === "preparing") return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300";
+    if (s === "packed" || s === "preparing" || s === "processing") return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300";
     if (s === "shipped" || s === "out for delivery") return "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300";
     if (s === "delivered") return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300";
     if (s === "cancelled") return "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300";
@@ -393,10 +314,10 @@ function OrdersPage() {
   };
 
   const getTimelineStep = (status: string) => {
-    const s = status.toLowerCase();
+    const s = (status || "").toLowerCase();
     if (s === "pending") return 0;
     if (s === "confirmed") return 1;
-    if (s === "packed" || s === "preparing") return 2;
+    if (s === "packed" || s === "preparing" || s === "processing") return 2;
     if (s === "shipped" || s === "out for delivery") return 3;
     if (s === "delivered") return 4;
     return -1; // cancelled
@@ -421,7 +342,7 @@ function OrdersPage() {
               My Orders
             </h1>
             <p className="text-xs text-zinc-500 mt-1">
-              Manage your flower bookings, fresh bloom subscriptions and pooja orders.
+              Track your ordered flowers, delivery status, dates, payment and address.
             </p>
           </div>
 
@@ -496,7 +417,7 @@ function OrdersPage() {
                 <option>All</option>
                 <option>Pending</option>
                 <option>Confirmed</option>
-                <option>Preparing</option>
+                <option>Processing</option>
                 <option>Out for Delivery</option>
                 <option>Delivered</option>
                 <option>Cancelled</option>
@@ -556,66 +477,90 @@ function OrdersPage() {
               const statusStep = getTimelineStep(order.orderStatus || "");
               const isPending = ["Pending", "Confirmed"].includes(order.orderStatus || "");
               const isDelivered = order.orderStatus === "Delivered";
+              const formattedAddress = typeof order.shippingAddress === "string" 
+                ? order.shippingAddress 
+                : [
+                    order.shippingAddress?.street || order.shippingAddress?.address,
+                    order.shippingAddress?.city,
+                    order.shippingAddress?.state,
+                    order.shippingAddress?.pincode ? `- ${order.shippingAddress?.pincode}` : ""
+                  ].filter(Boolean).join(", ") || "Delivery Address Provided";
 
               return (
                 <div
                   key={order._id || order.id}
                   className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden"
                 >
-                  {/* Top Bar Header */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 bg-zinc-50 dark:bg-zinc-800/40 p-4 border-b border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500">
+                  {/* Top Bar Header: Order ID, Date, Payment, Grand Total & Admin Status */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-50 dark:bg-zinc-800/40 p-4 border-b border-zinc-100 dark:border-zinc-800 text-xs text-zinc-500">
                     <div>
                       <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Order ID</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">#{order.orderId || order.order_number}</span>
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">#{order.orderId || order.order_number || order._id}</span>
                     </div>
                     <div>
-                      <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Date</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">{new Date(order.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    </div>
-                    <div>
-                      <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Payment</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">{order.paymentMethod}</span>
-                    </div>
-                    <div>
-                      <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Ship To</span>
-                      <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate block max-w-[120px]" title={order.shippingAddress?.street}>
-                        {order.shippingAddress?.city || "Pune"}
+                      <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Order Date</span>
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+                        <Calendar size={12} className="text-[#2E7D32]" />
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
-                    <div className="col-span-2 md:col-span-1 flex items-center justify-between md:justify-end gap-2">
+                    <div>
+                      <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Total Amount</span>
+                      <span className="font-bold text-[#2E7D32] text-sm block">
+                        ₹{order.grandTotal || order.total_amount || order.totalAmount}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between md:justify-end gap-2">
+                      <div className="text-right">
+                        <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400">Live Status</span>
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase ${getStatusColor(order.orderStatus || "")}`}>
+                          {order.orderStatus || "Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Body - Ordered Flowers */}
+                  <div className="p-4 space-y-3">
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                      {order.items?.map((item: any, idx: number) => (
+                        <div key={idx} className="flex gap-4 items-center py-2.5 first:pt-0 last:pb-0">
+                          <img
+                            src={item.image || getFlowerImageByName(item.flowerName || item.product_name || item.name || "")}
+                            alt={item.flowerName || item.product_name}
+                            className="h-16 w-16 rounded-xl object-cover border border-zinc-100 dark:border-zinc-800 shadow-sm shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-sm truncate text-zinc-900 dark:text-zinc-100">
+                              {item.flowerName || item.product_name || item.name}
+                            </h4>
+                            <p className="text-xs text-zinc-500 capitalize">{item.category || "Fresh Bloom"}</p>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium mt-0.5">
+                              Quantity: <span className="font-bold">{item.quantity || item.qty}</span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold text-sm text-[#2E7D32]">₹{(item.price || 0) * (item.quantity || item.qty || 1)}</span>
+                            <span className="block text-[10px] text-zinc-400">₹{item.price} each</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Delivery Address Section */}
+                    <div className="flex items-start gap-2 bg-zinc-50/70 dark:bg-zinc-800/30 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800/60 text-xs text-zinc-600 dark:text-zinc-300">
+                      <MapPin size={15} className="text-[#2E7D32] shrink-0 mt-0.5" />
                       <div>
-                        <span className="block uppercase tracking-wider text-[10px] font-bold text-zinc-400 md:text-right">Grand Total</span>
-                        <span className="font-bold text-[#2E7D32] text-sm md:text-right block">₹{order.grandTotal || order.total_amount}</span>
+                        <span className="font-bold text-zinc-700 dark:text-zinc-200">Delivery Address: </span>
+                        <span>{formattedAddress}</span>
+                        {order.shippingAddress?.phone && (
+                          <span className="block text-[11px] text-zinc-400 mt-0.5">Contact: {order.shippingAddress.phone}</span>
+                        )}
                       </div>
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border uppercase ${getStatusColor(order.orderStatus || "")}`}>
-                        {order.orderStatus}
-                      </span>
                     </div>
                   </div>
 
-                  {/* Body - Ordered Items */}
-                  <div className="p-4 space-y-4">
-                    {order.items?.map((item: any, idx: number) => (
-                      <div key={idx} className="flex gap-4 items-center">
-                        <img
-                          src={item.image || "https://images.unsplash.com/photo-1561181286-d3fee7d55364"}
-                          alt={item.flowerName || item.product_name}
-                          className="h-16 w-16 rounded-xl object-cover border border-zinc-100 dark:border-zinc-800 shadow-sm shrink-0"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate">{item.flowerName || item.product_name}</h4>
-                          <p className="text-xs text-zinc-500 capitalize">{item.category || "Fresh Flower"}</p>
-                          <p className="text-xs text-zinc-500 font-medium mt-1">Qty: {item.quantity}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-bold text-sm">₹{item.price * item.quantity}</span>
-                          <span className="block text-[10px] text-zinc-400">₹{item.price} each</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Horizontal Timeline Tracker */}
+                  {/* Horizontal Timeline Tracker (Updated in Real-Time by Admin) */}
                   {statusStep >= 0 && (
                     <div className="px-6 py-4 bg-zinc-50/50 dark:bg-zinc-800/20 border-t border-b border-zinc-100 dark:border-zinc-800">
                       <div className="flex items-center justify-between text-[10px] md:text-xs font-semibold text-zinc-500 relative">
@@ -630,8 +575,8 @@ function OrdersPage() {
                         {[
                           { label: "Order Placed", step: 0 },
                           { label: "Confirmed", step: 1 },
-                          { label: "Packed", step: 2 },
-                          { label: "Shipped", step: 3 },
+                          { label: "Processing", step: 2 },
+                          { label: "Out for Delivery", step: 3 },
                           { label: "Delivered", step: 4 }
                         ].map((s) => {
                           const isCompleted = statusStep >= s.step;
@@ -673,7 +618,7 @@ function OrdersPage() {
                         <span className="hidden sm:inline">Details</span>
                       </button>
 
-                      {statusStep >= 0 && statusStep < 4 && (
+                      {statusStep >= 0 && (
                         <button
                           onClick={() => {
                             setTrackingOrder(order);
@@ -683,7 +628,7 @@ function OrdersPage() {
                           title="Track Package"
                         >
                           <Clock size={14} />
-                          <span className="hidden sm:inline">Track Package</span>
+                          <span>Track Status</span>
                         </button>
                       )}
 
@@ -835,8 +780,8 @@ function OrdersPage() {
                     <div key={idx} className="flex gap-4 items-center justify-between text-xs">
                       <div className="flex gap-3 items-center">
                         <img
-                          src={item.image || "https://images.unsplash.com/photo-1561181286-d3fee7d55364"}
-                          alt={item.flowerName}
+                          src={item.image || getFlowerImageByName(item.flowerName || item.product_name || item.name || "")}
+                          alt={item.flowerName || item.product_name}
                           className="h-10 w-10 rounded-lg object-cover"
                         />
                         <div>
@@ -884,28 +829,36 @@ function OrdersPage() {
       {isTrackingModalOpen && trackingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsTrackingModalOpen(false)} />
-          <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden p-6 animate-in fade-in zoom-in duration-200 space-y-6">
+          <div className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden p-6 animate-in fade-in zoom-in duration-200 space-y-5">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-base">Track Delivery</h3>
-                <span className="text-xs text-zinc-400">Order #{trackingOrder.orderId || trackingOrder.order_number}</span>
+                <span className="text-xs text-zinc-400">Order #{trackingOrder.orderId || trackingOrder.order_number || trackingOrder._id}</span>
               </div>
               <button onClick={() => setIsTrackingModalOpen(false)} className="text-zinc-400 hover:text-zinc-600">
                 <X size={20} />
               </button>
             </div>
 
+            {/* Current Status Badge updated by admin */}
+            <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/60 p-3.5 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+              <span className="text-xs font-bold text-zinc-500">Live Status:</span>
+              <span className={`px-3 py-1 rounded-full text-xs font-extrabold border uppercase ${getStatusColor(trackingOrder.orderStatus || "Pending")}`}>
+                {trackingOrder.orderStatus || "Pending"}
+              </span>
+            </div>
+
             {/* Tracking timeline */}
-            <div className="space-y-6 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-zinc-200 dark:before:bg-zinc-800">
+            <div className="space-y-5 relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-zinc-200 dark:before:bg-zinc-800">
               {[
-                { title: "Order Placed", time: "Pending confirmation", step: 0 },
-                { title: "Confirmed", time: "Seller accepted order", step: 1 },
-                { title: "Packed & Ready", time: "Flowers sorted & wrapped", step: 2 },
-                { title: "Out for Delivery", time: "On partner vehicle", step: 3 },
-                { title: "Delivered", time: "Handed over directly", step: 4 }
+                { title: "Order Placed", time: "Order received by Pushpangan", step: 0 },
+                { title: "Confirmed", time: "Seller accepted & scheduled booking", step: 1 },
+                { title: "Processing / Packed", time: "Fresh blooms prepared and packed", step: 2 },
+                { title: "Out for Delivery", time: "On delivery vehicle to your location", step: 3 },
+                { title: "Delivered", time: "Package delivered successfully", step: 4 }
               ].map((step, idx) => {
                 const currentStep = getTimelineStep(trackingOrder.orderStatus || "");
-                const isDone = currentStep >= step.step;
+                const isDone = currentStep >= step.step && currentStep !== -1;
                 const isCurrent = currentStep === step.step;
 
                 return (
@@ -915,7 +868,7 @@ function OrdersPage() {
                         isDone
                           ? "bg-[#2E7D32] border-[#2E7D32] scale-110"
                           : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
-                      } ${isCurrent ? "animate-ping opacity-75" : ""}`}
+                      } ${isCurrent ? "ring-4 ring-[#66BB6A]/40 bg-[#2E7D32] border-[#2E7D32]" : ""}`}
                     />
                     <div className="pl-2">
                       <h4 className={`font-bold ${isCurrent ? "text-[#2E7D32]" : isDone ? "text-zinc-800 dark:text-zinc-200" : "text-zinc-400"}`}>
@@ -930,12 +883,18 @@ function OrdersPage() {
 
             <div className="bg-zinc-50 dark:bg-zinc-800/40 p-4 rounded-2xl text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-zinc-400">Courier / Delivery Partner:</span>
-                <span className="font-semibold">Pushpangan Delivery Fleet</span>
+                <span className="text-zinc-400">Delivery Partner:</span>
+                <span className="font-semibold">Pushpangan Garden Express</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Tracking Number:</span>
-                <span className="font-semibold text-[#2E7D32]">PPN-{trackingOrder.orderId || trackingOrder.order_number}</span>
+                <span className="text-zinc-400">Tracking Code:</span>
+                <span className="font-semibold text-[#2E7D32]">PPN-{trackingOrder.orderId || trackingOrder.order_number || trackingOrder._id}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                <span className="text-zinc-400">Destination:</span>
+                <span className="font-semibold text-right max-w-[200px] truncate">
+                  {trackingOrder.shippingAddress?.street || trackingOrder.shippingAddress?.address || "Address provided"}, {trackingOrder.shippingAddress?.city || "Pune"}
+                </span>
               </div>
             </div>
           </div>
