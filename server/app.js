@@ -42,6 +42,19 @@ app.use(
   })
 );
 
+// ─── Health Check (before DB middleware so it always responds) ─────────────
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: "OK",
+    service: "Pushpangan Backend API",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+    mongodb_uri_set: !!process.env.MONGODB_URI,
+    jwt_secret_set: !!process.env.JWT_SECRET,
+  });
+});
+
 // ─── Lazy DB Connection Middleware (serverless-safe — no top-level await) ──
 let dbConnected = false;
 app.use(async (req, res, next) => {
@@ -85,17 +98,6 @@ app.use("/api", extraRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/account", userAccountRoutes);
 app.use("/api/reminders", reminderRoutes);
-
-// ─── Health Check ─────────────────────────────────────────────────────────────
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    status: "OK",
-    service: "Pushpangan Backend API",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-  });
-});
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {
