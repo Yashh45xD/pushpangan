@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app/api";
+const API_BASE = `${import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app"}/api`;
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("pushpangan_token");

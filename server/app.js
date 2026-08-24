@@ -34,7 +34,13 @@ app.options("*", cors({ origin: true, credentials: true }));
 app.use(cors({ origin: true, credentials: true }));
 
 // ─── Security Middlewares ─────────────────────────────────────────────────────
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 // ─── Lazy DB Connection Middleware (serverless-safe — no top-level await) ──
 let dbConnected = false;
