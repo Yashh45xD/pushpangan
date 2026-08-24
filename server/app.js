@@ -25,8 +25,7 @@ import reminderRoutes from "./routes/reminderRoutes.js";
 
 const app = express();
 
-// ─── Security Middlewares ─────────────────────────────────────────────────────
-app.use(helmet());
+// ─── CORS Configuration ───────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   "https://pushpangan.vercel.app",
   "https://blossom-bridge-app-gold.vercel.app",
@@ -34,21 +33,25 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. curl, mobile apps, same-origin)
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS: origin '${origin}' not allowed`));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin '${origin}' not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// Handle OPTIONS preflight for ALL routes FIRST — before helmet or any other middleware
+app.options("*", cors(corsOptions));
+
+// ─── Security Middlewares ─────────────────────────────────────────────────────
+app.use(cors(corsOptions));
+app.use(helmet());
 
 // ─── Request Parsing & Logging ────────────────────────────────────────────────
 app.use(express.json({ limit: "20mb" }));
