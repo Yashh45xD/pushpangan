@@ -11,7 +11,7 @@ export type UserProfile = {
 };
 
 import { API_URL } from "../config/api";
-const API_BASE = `${API_URL}/api/auth`;
+const API_BASE = `${API_URL}/api`;
 const USERS_STORAGE_KEY = "pushpangan_registered_users";
 const SESSION_STORAGE_KEY = "pushpangan_user_session";
 
