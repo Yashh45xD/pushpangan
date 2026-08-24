@@ -27,14 +27,6 @@ import reminderRoutes from "./routes/reminderRoutes.js";
 
 dotenv.config();
 
-// ─── Connect to MongoDB (runs once at module load for serverless warm starts) ──
-try {
-  await connectDB();
-} catch (err) {
-  console.error("[STARTUP] MongoDB connection failed:", err.message);
-  // Don't exit — let requests handle the error gracefully
-}
-
 const app = express();
 
 // ─── CORS — handled at Vercel infra level (vercel.json). Express cors is a safety net. ──
@@ -43,6 +35,24 @@ app.use(cors({ origin: true, credentials: true }));
 
 // ─── Security Middlewares ─────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: false }));
+
+// ─── Lazy DB Connection Middleware (serverless-safe — no top-level await) ──
+let dbConnected = false;
+app.use(async (req, res, next) => {
+  if (!dbConnected) {
+    try {
+      await connectDB();
+      dbConnected = true;
+    } catch (err) {
+      console.error("[DB] Connection failed:", err.message);
+      return res.status(500).json({
+        success: false,
+        message: "Database connection failed",
+      });
+    }
+  }
+  next();
+});
 
 // ─── Request Parsing & Logging ────────────────────────────────────────────────
 app.use(express.json({ limit: "20mb" }));
