@@ -20,6 +20,8 @@ import addressRoutes from "./routes/addressRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import extraRoutes from "./routes/extraRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import userAccountRoutes from "./routes/userAccountRoutes.js";
+import reminderRoutes from "./routes/reminderRoutes.js";
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use("/api/address", addressRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", extraRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/account", userAccountRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/health", (req, res) => {

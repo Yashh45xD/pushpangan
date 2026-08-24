@@ -24,7 +24,7 @@ export type DbProduct = {
   color?: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app/api";
 
 const DEFAULT_DB_PRODUCTS: DbProduct[] = FLOWERS.map((f) => ({
   id: f.slug,

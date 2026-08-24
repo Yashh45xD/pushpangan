@@ -10,7 +10,8 @@ export type UserProfile = {
   pincode?: string;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { API_URL } from "../config/api.js";
+const API_BASE = `${API_URL}/api/auth`;
 const USERS_STORAGE_KEY = "pushpangan_registered_users";
 const SESSION_STORAGE_KEY = "pushpangan_user_session";
 

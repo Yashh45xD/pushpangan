@@ -117,7 +117,7 @@ router.get("/orders", protect, async (req, res) => {
     const orders = await Order.find({ user: req.user.id })
       .sort({ createdAt: -1 })
       .limit(20)
-      .populate("items.product", "name mainImage");
+      .populate("orderItems.product", "name mainImage");
     res.json({ success: true, orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
