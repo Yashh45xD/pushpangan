@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import dotenv from "dotenv";
+import { connectDB } from "./config/db.js";
 
 import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -23,35 +25,24 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import userAccountRoutes from "./routes/userAccountRoutes.js";
 import reminderRoutes from "./routes/reminderRoutes.js";
 
+dotenv.config();
+
+// ─── Connect to MongoDB (runs once at module load for serverless warm starts) ──
+try {
+  await connectDB();
+} catch (err) {
+  console.error("[STARTUP] MongoDB connection failed:", err.message);
+  // Don't exit — let requests handle the error gracefully
+}
+
 const app = express();
 
-// ─── CORS Configuration ───────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  "https://pushpangan.vercel.app",
-  "https://blossom-bridge-app-gold.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:5173",
-];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS: origin '${origin}' not allowed`));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-// Handle OPTIONS preflight for ALL routes FIRST — before helmet or any other middleware
-app.options("*", cors(corsOptions));
+// ─── CORS — handled at Vercel infra level (vercel.json). Express cors is a safety net. ──
+app.options("*", cors({ origin: true, credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 
 // ─── Security Middlewares ─────────────────────────────────────────────────────
-app.use(cors(corsOptions));
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // ─── Request Parsing & Logging ────────────────────────────────────────────────
 app.use(express.json({ limit: "20mb" }));
