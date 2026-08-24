@@ -10,7 +10,7 @@ export type UserProfile = {
   pincode?: string;
 };
 
-import { API_URL } from "../config/api.js";
+import { API_URL } from "../config/api";
 const API_BASE = `${API_URL}/api/auth`;
 const USERS_STORAGE_KEY = "pushpangan_registered_users";
 const SESSION_STORAGE_KEY = "pushpangan_user_session";
