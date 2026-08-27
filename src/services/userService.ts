@@ -1,6 +1,7 @@
 import { orderService } from "./orderService";
+import { API_URL } from "@/config/api";
 
-const BASE = "/api/account";
+const BASE = `${API_URL}/api/account`;
 
 function getToken(): string | null {
   try {

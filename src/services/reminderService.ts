@@ -1,4 +1,4 @@
-import { getMongoDb, ObjectId } from "@/lib/mongodb";
+import { API_URL } from "@/config/api";
 
 export type ReminderType =
   | "birthday"
@@ -17,41 +17,55 @@ export type ReminderInput = {
   notes?: string;
 };
 
+const BASE = `${API_URL}/api/reminders`;
+
+function getToken(): string | null {
+  try {
+    return localStorage.getItem("pushpangan_token");
+  } catch {
+    return null;
+  }
+}
+
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 export const reminderService = {
-  // Create event reminder in MongoDB
+  // Create event reminder via backend REST API
   async createReminder(input: ReminderInput) {
-    const db = await getMongoDb();
-    const newReminder = {
-      user_id: input.user_id,
-      reminder_type: input.reminder_type,
-      event_name: input.event_name,
-      event_date: new Date(input.event_date),
-      notify_days_before: input.notify_days_before || 3,
-      notes: input.notes || "",
-      is_active: true,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    const res = await db.collection("followup_reminders").insertOne(newReminder);
-    return { ...newReminder, id: res.insertedId.toString() };
+    const res = await fetch(BASE, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(input),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to create reminder");
+    return data.data ?? data;
   },
 
-  // Get active reminders for user from MongoDB
+  // Get active reminders for user via backend REST API
   async getUserReminders(userId: string) {
-    const db = await getMongoDb();
-    const reminders = await db
-      .collection("followup_reminders")
-      .find({ user_id: userId, is_active: true })
-      .sort({ event_date: 1 })
-      .toArray();
-
-    return reminders.map((r) => ({ ...r, id: r._id.toString() }));
+    const res = await fetch(`${BASE}?user_id=${encodeURIComponent(userId)}`, {
+      headers: authHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to fetch reminders");
+    return data.data ?? data;
   },
 
-  // Delete reminder in MongoDB
+  // Delete reminder via backend REST API
   async deleteReminder(reminderId: string) {
-    const db = await getMongoDb();
-    await db.collection("followup_reminders").deleteOne({ _id: new ObjectId(reminderId) });
+    const res = await fetch(`${BASE}/${encodeURIComponent(reminderId)}`, {
+      method: "DELETE",
+      headers: authHeaders(),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Failed to delete reminder");
+    return data;
   },
 };
