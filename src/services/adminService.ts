@@ -7,8 +7,9 @@ import {
   persistAdminSession,
   validateLocalAdminCredentials,
 } from "../lib/adminAuth";
+import { API_URL } from "../config/api";
 
-const API_BASE = `${import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app"}/api/admin`;
+const API_BASE = `${API_URL}/api/admin`;
 
 const getHeaders = () => {
   const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null;

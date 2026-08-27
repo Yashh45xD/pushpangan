@@ -29,9 +29,37 @@ dotenv.config();
 
 const app = express();
 
-// ─── CORS — handled at Vercel infra level (vercel.json). Express cors is a safety net. ──
-app.options("*", cors({ origin: true, credentials: true }));
-app.use(cors({ origin: true, credentials: true }));
+// ─── CORS — dynamically allow production + Vercel preview origins ─────────────
+const allowedOrigins = [
+  "https://pushpangan.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (server-to-server, curl, mobile apps)
+    if (!origin) return callback(null, true);
+    // Allow any Vercel preview deployment
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app")
+    ) {
+      return callback(null, true);
+    }
+    // Reject unknown origins
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// Handle preflight for ALL routes
+app.options("*", cors(corsOptions));
+// Apply CORS to ALL routes
+app.use(cors(corsOptions));
 
 // ─── Security Middlewares ─────────────────────────────────────────────────────
 app.use(
@@ -42,7 +70,17 @@ app.use(
   })
 );
 
-// ─── Health Check (before DB middleware so it always responds) ─────────────
+// ─── Root & Health Check (before DB middleware so they always respond) ────────
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    service: "Pushpangan Backend API",
+    version: "2.0.0",
+    health: "/health",
+    api: "/api",
+  });
+});
+
 app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -54,6 +92,12 @@ app.get("/health", (req, res) => {
     jwt_secret_set: !!process.env.JWT_SECRET,
   });
 });
+
+// ─── Request Parsing & Logging (before DB so parsing is always ready) ─────────
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true, limit: "20mb" }));
+app.use(cookieParser());
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // ─── Lazy DB Connection Middleware (serverless-safe — no top-level await) ──
 let dbConnected = false;
@@ -72,12 +116,6 @@ app.use(async (req, res, next) => {
   }
   next();
 });
-
-// ─── Request Parsing & Logging ────────────────────────────────────────────────
-app.use(express.json({ limit: "20mb" }));
-app.use(express.urlencoded({ extended: true, limit: "20mb" }));
-app.use(cookieParser());
-app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 // ─── Global Rate Limiter ──────────────────────────────────────────────────────
 app.use("/api", apiLimiter);

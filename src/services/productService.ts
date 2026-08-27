@@ -1,4 +1,5 @@
 import { Flower, FLOWERS } from "@/lib/flowers";
+import { API_URL } from "@/config/api";
 
 export type DbProduct = {
   id?: string;
@@ -24,7 +25,7 @@ export type DbProduct = {
   color?: string;
 };
 
-const API_BASE = `${import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app"}/api`;
+const API_BASE = `${API_URL}/api`;
 
 const DEFAULT_DB_PRODUCTS: DbProduct[] = FLOWERS.map((f) => ({
   id: f.slug,

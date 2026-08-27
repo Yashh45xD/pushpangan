@@ -1,3 +1,5 @@
+import { API_URL } from "../config/api";
+
 export type OrderStatus =
   | "Pending"
   | "Confirmed"
@@ -45,7 +47,7 @@ function saveOrders(orders: any[]) {
   localStorage.setItem(ORDERS_KEY, JSON.stringify(orders));
 }
 
-const API_BASE = `${import.meta.env.VITE_API_URL || "https://blossom-bridge-app-gold.vercel.app"}/api`;
+const API_BASE = `${API_URL}/api`;
 
 function getAuthHeaders() {
   const token = localStorage.getItem("pushpangan_token");
