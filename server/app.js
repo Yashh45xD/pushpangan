@@ -31,7 +31,11 @@ const app = express();
 
 // ─── CORS — dynamically allow production + Vercel preview origins ─────────────
 const allowedOrigins = [
+  // Production frontends
+  "https://blossom-bridge-app-gold.vercel.app",
   "https://pushpangan.vercel.app",
+  "https://pushpanganweb.vercel.app",
+  // Local development
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:8080",
@@ -39,21 +43,20 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (server-to-server, curl, mobile apps)
+    // Allow requests with no origin (server-to-server, curl, Postman, mobile)
     if (!origin) return callback(null, true);
-    // Allow any Vercel preview deployment
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith(".vercel.app")
-    ) {
-      return callback(null, true);
-    }
-    // Reject unknown origins
+    // Explicitly allowed origins
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any Vercel preview/branch deployment (e.g. my-app-git-main-xyz.vercel.app)
+    if (origin.endsWith(".vercel.app")) return callback(null, true);
+    // Reject everything else
+    console.warn(`[CORS] Blocked origin: ${origin}`);
     return callback(new Error(`CORS: origin ${origin} not allowed`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["Set-Cookie"],
 };
 
 // Handle preflight for ALL routes
@@ -108,9 +111,16 @@ app.use(async (req, res, next) => {
       dbConnected = true;
     } catch (err) {
       console.error("[DB] Connection failed:", err.message);
+      // Explicitly set CORS header on error responses so the browser
+      // reports the real error (DB failure) rather than a CORS block.
+      const origin = req.headers.origin;
+      if (origin && (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app"))) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+      }
       return res.status(500).json({
         success: false,
-        message: "Database connection failed",
+        message: "Database connection failed. Please try again shortly.",
       });
     }
   }
