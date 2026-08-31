@@ -29,33 +29,36 @@ dotenv.config();
 
 const app = express();
 
-// ─── CORS — dynamically allow production + Vercel preview origins ─────────────
+// ─── CORS — dynamically allow production + Vercel + Render preview origins ─────────────
 const allowedOrigins = [
-  // Production frontends
   "https://blossom-bridge-app-gold.vercel.app",
   "https://pushpangan.vercel.app",
   "https://pushpanganweb.vercel.app",
-  // Local development
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
 
+if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (server-to-server, curl, Postman, mobile)
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
     // Explicitly allowed origins
     if (allowedOrigins.includes(origin)) return callback(null, true);
-    // Allow any Vercel preview/branch deployment (e.g. my-app-git-main-xyz.vercel.app)
-    if (origin.endsWith(".vercel.app")) return callback(null, true);
-    // Reject everything else
+    // Allow any Vercel deployment (*.vercel.app) or Render deployment (*.onrender.com)
+    if (origin.endsWith(".vercel.app") || origin.endsWith(".onrender.com")) {
+      return callback(null, true);
+    }
     console.warn(`[CORS] Blocked origin: ${origin}`);
-    return callback(new Error(`CORS: origin ${origin} not allowed`));
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
   exposedHeaders: ["Set-Cookie"],
 };
 
