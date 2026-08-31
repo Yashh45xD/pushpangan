@@ -18,6 +18,10 @@ export default defineConfig({
   nitro: {
     preset: "vercel",
   },
+  react: {
+    jsxRuntime: "automatic",
+    jsxImportSource: "react",
+  },
   vite: {
     define: {
       "process.env.NODE_ENV": JSON.stringify("production"),
@@ -27,16 +31,20 @@ export default defineConfig({
       jsxDev: false,
     },
     ssr: {
-      // Don't bundle React into the SSR output — let it resolve from node_modules
-      // at runtime so the correct production jsx-runtime is used.
-      noExternal: [],
-      external: [
+      noExternal: [
         "react",
         "react-dom",
         "react/jsx-runtime",
-        "react/jsx-dev-runtime",
         "react-dom/server",
+        "@tanstack/react-router",
+        "@tanstack/react-start",
+        "@tanstack/react-query",
+        "@tanstack/query-core",
       ],
+      external: ["tslib"],
     },
   },
 });
+
+
+
