@@ -193,13 +193,14 @@ export const orderService = {
   },
 
   async getUserOrders(userId?: string) {
+    let apiOrders: any[] = [];
     try {
       const response = await fetch(`${API_BASE}/orders/myorders`, {
         headers: getAuthHeaders(),
       });
       const data = await response.json();
       if (response.ok && data.success && Array.isArray(data.data)) {
-        return data.data;
+        apiOrders = data.data;
       }
     } catch (err) {
       console.warn("Backend API getUserOrders failed, falling back to local storage:", err);
@@ -216,21 +217,30 @@ export const orderService = {
       saveOrders(cleanedOrders);
     }
 
-    if (!userId || userId === "guest" || userId === "all") {
-      return cleanedOrders;
-    }
-
-    // Filter strictly by the current buyer's ID/email/phone
-    const buyerOrders = cleanedOrders.filter((o) => {
+    // Filter local orders by buyer if needed, but include all browser local orders
+    const buyerLocalOrders = cleanedOrders.filter((o) => {
+      if (!userId || userId === "guest" || userId === "all") return true;
       if (o.userId === userId) return true;
       if (o.userEmail && o.userEmail.toLowerCase() === userId.toLowerCase()) return true;
       if (o.customerEmail && o.customerEmail.toLowerCase() === userId.toLowerCase()) return true;
       if (o.customerPhone === userId || o.shippingAddress?.phone === userId) return true;
-      if (o.userId === "guest" || !o.userId) return true; // orders placed in this browser
-      return false;
+      return true; // Default to including local browser orders
     });
 
-    return buyerOrders;
+    // Merge API orders and local storage orders, avoiding duplicates
+    const mergedMap = new Map<string, any>();
+    for (const o of apiOrders) {
+      const key = o._id || o.id || o.orderId || o.orderNumber;
+      if (key) mergedMap.set(String(key), o);
+    }
+    for (const o of buyerLocalOrders) {
+      const key = o._id || o.id || o.orderId || o.orderNumber;
+      if (key && !mergedMap.has(String(key))) {
+        mergedMap.set(String(key), o);
+      }
+    }
+
+    return Array.from(mergedMap.values());
   },
 
   async getOrderById(id: string) {

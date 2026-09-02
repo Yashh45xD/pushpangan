@@ -161,12 +161,14 @@ export const userService = {
 
   async getOrders() {
     try {
-      return await fetchAuth(`${BASE}/orders`);
-    } catch {
-      const user = getMockUser();
-      const userOrders = await orderService.getUserOrders(user?.email || user?._id || "guest");
-      return { success: true, orders: Array.isArray(userOrders) ? userOrders : [] };
-    }
+      const res = await fetchAuth(`${BASE}/orders`);
+      if (res && res.success && Array.isArray(res.orders) && res.orders.length > 0) {
+        return res;
+      }
+    } catch { }
+    const user = getMockUser();
+    const userOrders = await orderService.getUserOrders(user?.email || user?._id || "guest");
+    return { success: true, orders: Array.isArray(userOrders) ? userOrders : [] };
   },
 
   async getRewards() {
