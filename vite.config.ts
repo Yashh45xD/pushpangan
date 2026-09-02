@@ -12,9 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  // Override the default cloudflare-module preset to target Vercel's Node.js runtime.
-  // Without this, the SSR bundle is built for Cloudflare Workers and the
-  // react/jsx-runtime module fails to resolve, causing the jsxDEV crash.
+  // Target Vercel's Node.js runtime for Nitro SSR builds.
   nitro: {
     preset: "vercel",
   },
@@ -23,24 +21,7 @@ export default defineConfig({
     jsxImportSource: "react",
   },
   vite: {
-    define: {
-      "process.env.NODE_ENV": JSON.stringify("production"),
-    },
-    esbuild: {
-      jsx: "automatic",
-      jsxDev: false,
-    },
     ssr: {
-      noExternal: [
-        "react",
-        "react-dom",
-        "react/jsx-runtime",
-        "react-dom/server",
-        "@tanstack/react-router",
-        "@tanstack/react-start",
-        "@tanstack/react-query",
-        "@tanstack/query-core",
-      ],
       external: ["tslib"],
     },
   },
